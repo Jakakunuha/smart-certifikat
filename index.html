@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART-CERT - Aplikasi Generate Sertifikat Otomatis</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+    }
+
+    /* Blogger Reset */
+    .navbar,
+    #navbar-iframe,
+    .tabs-outer,
+    .header-outer {
+      display: none !important;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 hidden md:block shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="bg-indigo-600 text-white p-2 rounded-xl">
+          <i class="fa-solid fa-file-certificate text-xl"></i>
+        </div>
+        <div>
+          <span class="font-bold text-lg tracking-tight text-slate-900">SMART<span
+              class="text-indigo-600">-CERT</span></span>
+          <p class="text-xs text-slate-500 font-medium">Divisi Pemrograman INF Universitas Nurul Huda</p>
+        </div>
+      </div>
+      <nav class="flex items-center gap-1 font-medium text-sm">
+        <button onclick="navigasiKe('cari')" id="btn-top-cari"
+          class="px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 transition">
+          <i class="fa-solid fa-magnifying-glass mr-2"></i>Cari Sertifikat
+        </button>
+        <button onclick="navigasiKe('dashboard')" id="btn-top-dashboard"
+          class="px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-gauge mr-2"></i>Panel Admin
+        </button>
+        <button onclick="prosesLogout()" id="btn-top-logout"
+          class="px-4 py-2 rounded-lg text-rose-600 hover:bg-rose-50 transition hidden">
+          <i class="fa-solid fa-right-from-bracket mr-2"></i>Keluar
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div id="ready-badge" class="bg-amber-500 text-white text-center py-1 text-xs font-semibold transition-all">
+    System Initializing & Synchronizing...
+  </div>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:py-8">
+
+    <section id="page-cari" class="space-y-6">
+      <div class="text-center max-w-xl mx-auto my-4 space-y-2">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Unduh Sertifikat Digital Anda</h1>
+        <p class="text-sm text-slate-500">Silakan cari sertifikat resmi acara menggunakan salah satu data pengenal Anda
+          di bawah ini.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 md:p-6 max-w-2xl mx-auto space-y-4">
+        <div class="grid grid-cols-3 gap-2 p-1 bg-slate-100 rounded-xl text-xs md:text-sm font-semibold">
+          <button onclick="pilihKategoriCari('No_HP')" id="tab-cari-No_HP"
+            class="py-2.5 text-center rounded-lg bg-white text-indigo-600 shadow-xs transition">
+            <i class="fa-solid fa-phone mr-1.5"></i>No. HP
+          </button>
+          <button onclick="pilihKategoriCari('Email')" id="tab-cari-Email"
+            class="py-2.5 text-center rounded-lg text-slate-600 hover:text-slate-900 transition">
+            <i class="fa-solid fa-envelope mr-1.5"></i>Email
+          </button>
+          <button onclick="pilihKategoriCari('Nama_Peserta')" id="tab-cari-Nama_Peserta"
+            class="py-2.5 text-center rounded-lg text-slate-600 hover:text-slate-900 transition">
+            <i class="fa-solid fa-user mr-1.5"></i>Nama
+          </button>
+        </div>
+        <div class="relative flex gap-2">
+          <input type="text" id="input-keyword-cari" placeholder="Masukkan nomor HP aktif Anda..."
+            class="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:border-indigo-500 focus:bg-white text-sm transition"
+            onkeypress="if(event.key === 'Enter') eksekusiPencarianPublik()">
+          <button onclick="eksekusiPencarianPublik()"
+            class="bg-indigo-600 text-white px-5 rounded-xl hover:bg-indigo-700 transition flex items-center justify-center">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="wrapper-hasil-cari" class="max-w-2xl mx-auto hidden">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-3"><i
+            class="fa-solid fa-square-poll-horizontal mr-2"></i>Hasil Pencarian</h3>
+        <div id="container-hasil-cari" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <section id="page-login" class="hidden max-w-md mx-auto my-12 space-y-6">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 md:p-8 space-y-4">
+        <div class="text-center space-y-1">
+          <div class="inline-block bg-indigo-50 text-indigo-600 p-3 rounded-full mb-2">
+            <i class="fa-solid fa-lock text-2xl"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900">Gerbang Masuk Panitia</h2>
+          <p class="text-xs text-slate-500">Gunakan akun admin SMART-CERT untuk mengelola data</p>
+        </div>
+        <form onsubmit="prosesLoginSistem(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Username</label>
+            <input type="text" id="login-user" required
+              class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-hidden focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+            <input type="password" id="login-pass" required
+              class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-hidden focus:border-indigo-500">
+          </div>
+          <button type="submit"
+            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition mt-2 shadow-xs">
+            Masuk Sekarang <i class="fa-solid fa-arrow-right ml-1"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section id="page-dashboard" class="hidden space-y-6">
+      <div
+        class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Selamat Datang, Admin SMART-CERT</h2>
+          <p class="text-xs text-slate-500">Manajemen templat desain, input satuan, import masal, dan sinkronisasi
+            otomatis.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="unduhTemplateExcel()"
+            class="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white font-medium text-xs rounded-xl shadow-xs transition flex items-center">
+            <i class="fa-solid fa-download mr-1.5"></i>Template Excel
+          </button>
+          <label
+            class="cursor-pointer px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-xl shadow-xs transition flex items-center">
+            <i class="fa-solid fa-file-excel mr-1.5"></i>Import Excel
+            <input type="file" accept=".xlsx, .xls, .csv" onchange="prosesImportExcel(event)" class="hidden">
+          </label>
+          <button onclick="sinkronisasiDataCloud(false)"
+            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-xl shadow-xs transition flex items-center">
+            <i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>Tarik Data Cloud
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-xs p-5 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3 flex-wrap gap-2">
+            <h3 class="font-bold text-sm text-slate-900"><i
+                class="fa-solid fa-compass-drafting text-indigo-600 mr-2"></i>Studio Desain</h3>
+            <div class="flex items-center gap-2">
+              <div class="relative flex items-center">
+                <input type="url" id="input-url-templat" placeholder="Masukkan Link Gambar..."
+                  class="text-xs px-2 py-1.5 border border-slate-200 rounded-l-lg focus:outline-none focus:border-indigo-500 w-36 md:w-48">
+                <button onclick="muatGambarDariURL()"
+                  class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1.5 rounded-r-lg text-xs font-semibold transition shadow-sm">Pakai
+                  URL</button>
+              </div>
+              <label
+                class="cursor-pointer bg-slate-100 hover:bg-slate-200 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 transition flex items-center shadow-sm">
+                <i class="fa-solid fa-upload mr-1.5"></i> File Lokal
+                <input type="file" id="input-bg-sertifikat" accept="image/*" onchange="muatGambarTemplat(event)"
+                  class="hidden">
+              </label>
+            </div>
+          </div>
+          <div
+            class="overflow-auto border border-dashed border-slate-200 rounded-xl p-2 bg-slate-50 flex justify-center">
+            <canvas id="sertifikat-canvas" class="max-w-full shadow-md rounded-lg"></canvas>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl text-xs font-medium">
+            <div class="space-y-1">
+              <label class="text-slate-500">Posisi Horizontal (X-Axis)</label>
+              <input type="range" id="slider-x-nama" min="0" max="2000" value="320" oninput="renderUIAplikasi()"
+                class="w-full accent-indigo-600">
+            </div>
+            <div class="space-y-1">
+              <label class="text-slate-500">Posisi Vertikal Nama (Y-Axis)</label>
+              <input type="range" id="slider-y-nama" min="0" max="1000" value="230" oninput="renderUIAplikasi()"
+                class="w-full accent-indigo-600">
+            </div>
+            <div class="space-y-1">
+              <label class="text-slate-500">Ukuran Font Nama (px)</label>
+              <input type="range" id="slider-size-nama" min="10" max="100" value="25" oninput="renderUIAplikasi()"
+                class="w-full accent-indigo-600">
+            </div>
+            <div class="space-y-1">
+              <label class="text-slate-500">Warna Teks</label>
+              <input type="color" id="picker-color-nama" value="#1e1b4b" onchange="renderUIAplikasi()"
+                class="w-full h-7 rounded-md cursor-pointer border-0 p-0">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-5 space-y-4">
+          <h3 class="font-bold text-sm text-slate-900 border-b border-slate-100 pb-3"><i
+              class="fa-solid fa-user-plus text-indigo-600 mr-2"></i>Cetak Satuan (Single Input)</h3>
+          <form onsubmit="prosesCetakSatuan(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">Nomor Sertifikat</label>
+              <input type="text" id="form-nomor" required placeholder="Contoh: 001/UNUHA/VI/2026"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-indigo-500">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">Nama Lengkap Peserta</label>
+              <input type="text" id="form-nama" required placeholder="Contoh: Pamuji Muhamad Jakak"
+                class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-indigo-500">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Email</label>
+                <input type="email" id="form-email" required placeholder="nama@email.com"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-600 mb-1">Nomor WhatsApp</label>
+                <input type="text" id="form-hp" required placeholder="08123456789"
+                  class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-hidden focus:border-indigo-500">
+              </div>
+            </div>
+            <button type="submit"
+              class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition shadow-xs mt-2 text-sm">
+              <i class="fa-solid fa-file-arrow-down mr-1.5"></i>Render & Tambah Data
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        <div
+          class="p-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 class="font-bold text-sm text-slate-900"><i class="fa-solid fa-database text-indigo-600 mr-2"></i>Database
+            Terpusat & Antrean Cloud</h3>
+          <div class="text-xs text-slate-500 bg-white px-3 py-1 rounded-lg border border-slate-200">
+            Total Data: <span id="badge-total-data" class="font-bold text-indigo-600">0</span>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
+                <th class="p-3">Nomor Sertifikat</th>
+                <th class="p-3">Nama Lengkap</th>
+                <th class="p-3">Kontak Info</th>
+                <th class="p-3 text-center">Status Cloud</th>
+                <th class="p-3 text-right">Aksi Local/Drive</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-body-sertifikat" class="divide-y divide-slate-100 font-medium text-slate-700">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="pb-24 block clear-both content-none md:hidden"></div>
+  </main>
+
+  <nav
+    class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2.5 px-6 flex justify-around items-center z-40 md:hidden shadow-lg rounded-t-2xl">
+    <button onclick="navigasiKe('cari')" id="btn-bottom-cari" class="flex flex-col items-center gap-1 text-indigo-600">
+      <i class="fa-solid fa-magnifying-glass text-lg"></i>
+      <span class="text-[10px] font-bold">Cari</span>
+    </button>
+    <button onclick="navigasiKe('dashboard')" id="btn-bottom-dashboard"
+      class="flex flex-col items-center gap-1 text-slate-400">
+      <i class="fa-solid fa-gauge text-lg"></i>
+      <span class="text-[10px] font-bold">Admin</span>
+    </button>
+    <button onclick="prosesLogout()" id="btn-bottom-logout"
+      class="flex flex-col items-center gap-1 text-rose-500 hidden">
+      <i class="fa-solid fa-right-from-bracket text-lg"></i>
+      <span class="text-[10px] font-bold">Keluar</span>
+    </button>
+  </nav>
+
+  <div id="toast-box"
+    class="fixed top-5 right-5 z-50 transform translate-x-80 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="toast-content"
+      class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs font-semibold">
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // CONFIGURATION & DATABASE CONNECTION
+    // ==========================================
+    const IS_PREVIEW = false; // WAJIB false JIKA SUDAH LIVE
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxcYdWVnIJvHZz_slpL9IlY47dcG4JVHJ4sXPCeRjC02TxdSgfEBEx_Q1QCZL11kgca/exec";
+
+    let STATE_DATA = [];
+    let FILTER_CARI_SEKARANG = 'No_HP';
+    let USER_LOGIN = null;
+
+    const canvas = document.getElementById('sertifikat-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let isCustomTemplateLoaded = false;
+    let templateImage = new Image();
+    const DEFAULT_TEMPLATE_URL = "https://i.ibb.co.com/1tQr9w51/Sertifikat-Pelatihan-Laravel-Pemula-1.png"; templateImage.crossOrigin = "Anonymous"; // Izinkan download gambar (CORS)
+
+
+    window.addEventListener('DOMContentLoaded', () => {
+      inisialisasiDatabaseLokal();
+      periksaSesiLogin();
+
+      // MUAT TEMPLAT & DESAIN TERAKHIR DARI LOCALSTORAGE
+      muatKonfigurasiDesain();
+
+      if (!IS_PREVIEW) { sinkronisasiDataCloud(true); }
+      else { document.getElementById('ready-badge').classList.add('hidden'); }
+    });
+
+    function encodeBase64Safe(str) { return btoa(unescape(encodeURIComponent(str))); }
+    function decodeBase64Safe(str) { return decodeURIComponent(escape(atob(str))); }
+
+    function tampilkanToast(pesan, jenis = "success") {
+      const box = document.getElementById('toast-box'); const content = document.getElementById('toast-content');
+      let icon = '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>';
+      if (jenis === 'error') icon = '<i class="fa-solid fa-circle-exclamation text-rose-400 text-base"></i>';
+      if (jenis === 'info') icon = '<i class="fa-solid fa-circle-info text-amber-400 text-base"></i>';
+      content.innerHTML = `${icon} <span>${pesan}</span>`;
+      box.classList.remove('translate-x-80', 'opacity-0');
+      setTimeout(() => { box.classList.add('translate-x-80', 'opacity-0'); }, 4000);
+    }
+
+    function inisialisasiDatabaseLokal() {
+      const dataLokal = localStorage.getItem('smart_cert_db');
+      if (dataLokal) { STATE_DATA = JSON.parse(dataLokal); }
+      else { STATE_DATA = []; simpanKeLocalStorageBackup(); }
+    }
+    function simpanKeLocalStorageBackup() { localStorage.setItem('smart_cert_db', JSON.stringify(STATE_DATA)); }
+
+    function periksaSesiLogin() {
+      const sesi = localStorage.getItem('smart_cert_session');
+      if (sesi) { USER_LOGIN = JSON.parse(sesi); toggleVisibilitasLogout(true); }
+    }
+    function prosesLoginSistem(e) {
+      e.preventDefault();
+      const user = document.getElementById('login-user').value; const pass = document.getElementById('login-pass').value;
+      if (user === 'admin' && pass === 'admin123') {
+        USER_LOGIN = { username: 'admin', role: 'admin' }; localStorage.setItem('smart_cert_session', JSON.stringify(USER_LOGIN));
+        tampilkanToast("Login berhasil! Selamat datang."); toggleVisibilitasLogout(true); navigasiKe('dashboard');
+      } else { tampilkanToast("Kredensial salah!", "error"); }
+    }
+    function prosesLogout() {
+      localStorage.removeItem('smart_cert_session'); USER_LOGIN = null; toggleVisibilitasLogout(false);
+      tampilkanToast("Sesi diakhiri."); navigasiKe('cari');
+    }
+    function toggleVisibilitasLogout(isLogin) {
+      const btnTop = document.getElementById('btn-top-logout'); const btnBot = document.getElementById('btn-bottom-logout');
+      if (isLogin) { btnTop.classList.remove('hidden'); btnBot.classList.remove('hidden'); }
+      else { btnTop.classList.add('hidden'); btnBot.classList.add('hidden'); }
+    }
+
+    function navigasiKe(target) {
+      if (target === 'dashboard' && !USER_LOGIN) { target = 'login'; tampilkanToast("Akses khusus Admin.", "info"); }
+      document.getElementById('page-cari').classList.add('hidden'); document.getElementById('page-login').classList.add('hidden'); document.getElementById('page-dashboard').classList.add('hidden'); document.getElementById('page-' + target).classList.remove('hidden');
+      const navs = ['cari', 'dashboard'];
+      navs.forEach(n => {
+        const btnT = document.getElementById(`btn-top-${n}`); const btnB = document.getElementById(`btn-bottom-${n}`);
+        if (n === target || (n === 'dashboard' && target === 'login')) {
+          if (btnT) btnT.className = "px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 font-medium text-sm transition";
+          if (btnB) btnB.className = "flex flex-col items-center gap-1 text-indigo-600";
+        } else {
+          if (btnT) btnT.className = "px-4 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition";
+          if (btnB) btnB.className = "flex flex-col items-center gap-1 text-slate-400";
+        }
+      });
+    }
+
+    // ==========================================
+    // SISTEM PENYIMPANAN TEMPLAT & DESAIN PERMANEN
+    // ==========================================
+    function muatKonfigurasiDesain() {
+      const savedConfig = localStorage.getItem('smart_cert_config');
+      let imageToLoad = DEFAULT_TEMPLATE_URL; // Gunakan link online sebagai default
+
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        document.getElementById('slider-x-nama').value = config.xPos || 320;
+        document.getElementById('slider-y-nama').value = config.yPos || 230;
+        document.getElementById('slider-size-nama').value = config.fontSize || 25;
+        document.getElementById('picker-color-nama').value = config.color || "#1e1b4b";
+
+        if (config.templateBase64) {
+          imageToLoad = config.templateBase64; // Timpa dengan upload lokal jika ada
+        }
+      } else {
+        document.getElementById('slider-x-nama').value = 320;
+        document.getElementById('slider-y-nama').value = 230;
+        document.getElementById('slider-size-nama').value = 25;
+        document.getElementById('picker-color-nama').value = "#1e1b4b";
+      }
+
+      templateImage.src = imageToLoad;
+      templateImage.onload = () => {
+        isCustomTemplateLoaded = true;
+        canvas.width = templateImage.width; canvas.height = templateImage.height;
+        renderUIAplikasi();
+      };
+      templateImage.onerror = () => {
+        isCustomTemplateLoaded = false;
+        renderUIAplikasi(); // Render default kotak jika gambar link rusak/mati
+      };
+    }
+
+    function simpanKonfigurasiDesain(templateBase64 = null) {
+      const config = {
+        xPos: document.getElementById('slider-x-nama').value,
+        yPos: document.getElementById('slider-y-nama').value,
+        fontSize: document.getElementById('slider-size-nama').value,
+        color: document.getElementById('picker-color-nama').value,
+        templateBase64: templateBase64 || (isCustomTemplateLoaded ? templateImage.src : null)
+      };
+      try {
+        localStorage.setItem('smart_cert_config', JSON.stringify(config));
+      } catch (e) {
+        tampilkanToast("Storage penuh, gambar terlalu besar untuk disimpan permanen.", "error");
+      }
+    }
+
+    // Ubah fungsi render interaktif (dipanggil saat slider digeser)
+    // agar sekalian menyimpan posisi otomatis (Autosave)
+    function updateDesainInteraktif() {
+      renderUIAplikasi();
+      simpanKonfigurasiDesain();
+    }
+
+    // Pasang listener Autosave ke input kontrol desain
+    document.getElementById('slider-x-nama').addEventListener('input', updateDesainInteraktif);
+    document.getElementById('slider-y-nama').addEventListener('input', updateDesainInteraktif);
+    document.getElementById('slider-size-nama').addEventListener('input', updateDesainInteraktif);
+    document.getElementById('picker-color-nama').addEventListener('change', updateDesainInteraktif);
+
+    // MEMUAT GAMBAR DARI URL
+    function muatGambarDariURL() {
+      const url = document.getElementById('input-url-templat').value.trim();
+      if (!url) return tampilkanToast("Harap masukkan URL gambar!", "error");
+
+      tampilkanToast("Memuat gambar dari URL...", "info");
+
+      templateImage.onload = () => {
+        isCustomTemplateLoaded = true;
+        canvas.width = templateImage.width; canvas.height = templateImage.height;
+        simpanKonfigurasiDesain(url); // Simpan link URL ke memori permanen
+        renderUIAplikasi();
+        tampilkanToast("Templat URL berhasil terpasang!", "success");
+        document.getElementById('input-url-templat').value = ""; // Kosongkan input
+      };
+      templateImage.onerror = () => {
+        tampilkanToast("Gagal memuat! Pastikan link valid dan mendukung CORS.", "error");
+      };
+      // Trigger pemuatan ulang gambar
+      templateImage.src = url;
+    }
+
+    // MEMUAT GAMBAR BARU DAN MENYIMPANNYA KE LOCAL STORAGE
+    function muatGambarTemplat(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const base64Data = e.target.result;
+        templateImage.src = base64Data;
+        templateImage.onload = () => {
+          isCustomTemplateLoaded = true;
+          canvas.width = templateImage.width; canvas.height = templateImage.height;
+
+          simpanKonfigurasiDesain(base64Data); // Simpan gambar ke memori permanen
+          renderUIAplikasi();
+          tampilkanToast("Templat berhasil terpasang dan tersimpan permanen!", "success");
+        };
+      }; reader.readAsDataURL(file);
+    }
+
+    function renderUIAplikasi() {
+      if (!isCustomTemplateLoaded) { canvas.width = 1000; canvas.height = 700; }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (isCustomTemplateLoaded) {
+        ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 15; ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+        ctx.fillStyle = "#94a3b8"; ctx.font = "bold 40px 'Plus Jakarta Sans', sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("SERTIFIKAT PENGHARGAAN", canvas.width / 2, 200);
+        ctx.font = "20px sans-serif"; ctx.fillText("(Contoh Templat Default Bebas CORS)", canvas.width / 2, 250);
+      }
+
+      const xPos = document.getElementById('slider-x-nama').value; const yPos = document.getElementById('slider-y-nama').value; const fontSize = document.getElementById('slider-size-nama').value; const color = document.getElementById('picker-color-nama').value;
+      ctx.font = `bold ${fontSize}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = color; ctx.textAlign = "center";
+      ctx.fillText("Contoh Nama Peserta", xPos, yPos);
+
+      document.getElementById('badge-total-data').innerText = STATE_DATA.length;
+      const tbody = document.getElementById('tabel-body-sertifikat'); tbody.innerHTML = '';
+      STATE_DATA.forEach((item) => {
+        const payloadSafe = encodeBase64Safe(JSON.stringify(item));
+        const statusBadge = item.Status_Sertifikat === 'Tercetak' ? `<span class="px-2 py-1 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold">Tercetak</span>` : `<span class="px-2 py-1 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold animate-pulse">Terdaftar</span>`;
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 border-b border-slate-100">
+            <td class="p-3 font-mono font-bold text-slate-900">${item.Nomor_Sertifikat}</td>
+            <td class="p-3"><div class="font-bold text-slate-800">${item.Nama_Peserta}</div></td>
+            <td class="p-3 text-slate-500">${item.Email}</td>
+            <td class="p-3 text-center">${statusBadge}</td>
+            <td class="p-3 text-right">
+              <button onclick="unduhLangsungDariTabel('${payloadSafe}')" class="text-emerald-600 hover:text-emerald-800 font-bold" title="Cetak Gambar"><i class="fa-solid fa-download"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function prosesCetakSatuan(e) {
+      e.preventDefault();
+      const payload = { Timestamp: new Date().toLocaleString('id-ID'), Nomor_Sertifikat: document.getElementById('form-nomor').value, Nama_Peserta: document.getElementById('form-nama').value, Email: document.getElementById('form-email').value, No_HP: document.getElementById('form-hp').value, Status_Sertifikat: "Terdaftar", Link_Download_Drive: "" };
+      STATE_DATA.unshift(payload); simpanKeLocalStorageBackup(); renderUIAplikasi(); tampilkanToast("Data antrean lokal masuk!");
+      unduhSertifikatMesin(payload.Nama_Peserta, payload.Nomor_Sertifikat); e.target.reset(); memicuKirimDataCloudOtomatis(payload);
+    }
+
+    function unduhTemplateExcel() {
+      const dataTemplate = [["Nomor_Sertifikat", "Nama_Peserta", "Email", "No_HP"], ["001/UNUHA/2026", "Ahmad Luthfi, Ph.D.", "ahmad@contoh.com", "08123456789"]];
+      const worksheet = XLSX.utils.aoa_to_sheet(dataTemplate); worksheet['!cols'] = [{ wch: 22 }, { wch: 30 }, { wch: 25 }, { wch: 15 }];
+      const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Format_Sertifikat");
+      XLSX.writeFile(workbook, "Template_SMART-CERT.xlsx");
+    }
+
+    function prosesImportExcel(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = e.target.result; const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0]; const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        if (json.length === 0) return tampilkanToast("File Excel kosong!", "error");
+
+        const newPayloads = json.map(row => ({
+          Timestamp: new Date().toLocaleString('id-ID'),
+          Nomor_Sertifikat: row.Nomor_Sertifikat || row.nomor || "-", Nama_Peserta: row.Nama_Peserta || row.nama || "-",
+          Email: row.Email || "-", No_HP: row.No_HP || row.hp || row.Telepon || "-",
+          Status_Sertifikat: "Terdaftar", Link_Download_Drive: ""
+        }));
+        STATE_DATA = [...newPayloads, ...STATE_DATA]; simpanKeLocalStorageBackup(); renderUIAplikasi();
+        tampilkanToast(`${newPayloads.length} Data diimpor!`); memicuKirimDataBulkCloud(newPayloads);
+      }; reader.readAsBinaryString(file); event.target.value = '';
+    }
+
+    function unduhLangsungDariTabel(payloadSafe) {
+      const item = JSON.parse(decodeBase64Safe(payloadSafe)); unduhSertifikatMesin(item.Nama_Peserta, item.Nomor_Sertifikat);
+    }
+
+    function unduhSertifikatMesin(nama, nomor) {
+      const shadowCanvas = document.createElement('canvas'); const sCtx = shadowCanvas.getContext('2d');
+      shadowCanvas.width = canvas.width; shadowCanvas.height = canvas.height;
+
+      if (isCustomTemplateLoaded) {
+        sCtx.drawImage(templateImage, 0, 0, shadowCanvas.width, shadowCanvas.height);
+      } else {
+        sCtx.fillStyle = "#ffffff"; sCtx.fillRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+        sCtx.strokeStyle = "#4f46e5"; sCtx.lineWidth = 15; sCtx.strokeRect(30, 30, shadowCanvas.width - 60, shadowCanvas.height - 60);
+        sCtx.fillStyle = "#94a3b8"; sCtx.font = "bold 40px 'Plus Jakarta Sans', sans-serif"; sCtx.textAlign = "center";
+        sCtx.fillText("SERTIFIKAT PENGHARGAAN", shadowCanvas.width / 2, 200);
+      }
+
+      const xPos = document.getElementById('slider-x-nama').value; const yPos = document.getElementById('slider-y-nama').value; const fontSize = document.getElementById('slider-size-nama').value; const color = document.getElementById('picker-color-nama').value;
+      sCtx.font = `bold ${fontSize}px 'Plus Jakarta Sans', sans-serif`; sCtx.fillStyle = color; sCtx.textAlign = "center";
+      sCtx.fillText(nama, xPos, yPos);
+
+      const tautan = document.createElement('a'); tautan.download = `Sertifikat_${nama.replace(/\s+/g, '_')}.png`;
+      tautan.href = shadowCanvas.toDataURL('image/png'); tautan.click();
+      tampilkanToast("Gambar Sertifikat berhasil diunduh!");
+    }
+
+    async function memicuKirimDataCloudOtomatis(payload) {
+      if (IS_PREVIEW) return;
+      try {
+        const respon = await fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "tambah_sertifikat", data: payload }) });
+        const resJson = await respon.json();
+        if (resJson.status === 'success') { sinkronisasiDataCloud(true); tampilkanToast(`Cloud Sync: ${payload.Nama_Peserta}`); }
+      } catch (err) { console.error(err); }
+    }
+
+    async function memicuKirimDataBulkCloud(payloadArray) {
+      if (IS_PREVIEW) return tampilkanToast("Mode Pratinjau: Data Bulk berhasil disimulasikan.", "info");
+      try {
+        tampilkanToast("Mengirim Excel ke Spreadsheet Cloud...", "info");
+        const respon = await fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "tambah_sertifikat_bulk", data: payloadArray }) });
+        const resJson = await respon.json();
+        if (resJson.status === 'success') { sinkronisasiDataCloud(true); tampilkanToast("Data Massal Sukses Terekam di Spreadsheet!"); }
+        else { tampilkanToast("Server menolak: " + resJson.message, "error"); }
+      } catch (err) { tampilkanToast("Gagal menyimpan. Pastikan IS_PREVIEW false dan URL GAS benar.", "error"); }
+    }
+
+    async function sinkronisasiDataCloud(isSilent = false) {
+      if (!isSilent) tampilkanToast("Menarik Database Server...", "info");
+      if (IS_PREVIEW) { if (!isSilent) setTimeout(() => tampilkanToast("Selesai (Mode Preview)."), 500); return; }
+      try {
+        const respon = await fetch(`${GAS_URL}?action=ambil_semua`); const resJson = await respon.json();
+        if (resJson.status === 'success') { STATE_DATA = resJson.data.reverse(); simpanKeLocalStorageBackup(); renderUIAplikasi(); if (!isSilent) tampilkanToast("Database berhasil diperbarui."); }
+      } catch (err) { if (!isSilent) tampilkanToast("Server Google tidak merespon.", "error"); }
+      finally { document.getElementById('ready-badge').classList.add('hidden'); }
+    }
+
+    function pilihKategoriCari(kategori) {
+      FILTER_CARI_SEKARANG = kategori; const listKat = ['No_HP', 'Email', 'Nama_Peserta'];
+      listKat.forEach(k => { const btn = document.getElementById(`tab-cari-${k}`); if (k === kategori) btn.className = "py-2.5 text-center rounded-lg bg-white text-indigo-600 shadow-xs transition"; else btn.className = "py-2.5 text-center rounded-lg text-slate-600 hover:text-slate-900 transition"; });
+      const input = document.getElementById('input-keyword-cari');
+      if (kategori === 'No_HP') input.placeholder = "Masukkan nomor HP aktif Anda...";
+      if (kategori === 'Email') input.placeholder = "Masukkan alamat email terdaftar...";
+      if (kategori === 'Nama_Peserta') input.placeholder = "Masukkan nama lengkap Anda...";
+    }
+
+    function eksekusiPencarianPublik() {
+      const keyword = document.getElementById('input-keyword-cari').value.trim().toLowerCase();
+      if (!keyword) return tampilkanToast("Harap isi kata kunci!", "info");
+      const wrapper = document.getElementById('wrapper-hasil-cari'); const container = document.getElementById('container-hasil-cari'); container.innerHTML = '';
+      const hasilFilter = STATE_DATA.filter(item => { const val = item[FILTER_CARI_SEKARANG] ? item[FILTER_CARI_SEKARANG].toString().toLowerCase() : ''; return val.includes(keyword); });
+      if (hasilFilter.length === 0) {
+        container.innerHTML = `<div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs text-center font-medium">Data tidak ditemukan. Pastikan data benar atau hubungi Panitia.</div>`;
+      } else {
+        hasilFilter.forEach(item => {
+          const safePayload = encodeBase64Safe(JSON.stringify(item));
+          const btnCanvasRender = `<button onclick="unduhLangsungDariTabel('${safePayload}')" class="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-1.5"><i class="fa-solid fa-file-image"></i> Ambil Gambar</button>`;
+          container.innerHTML += `<div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row justify-between sm:items-center gap-3 text-xs"><div class="space-y-1"><span class="font-mono text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">${item.Nomor_Sertifikat}</span><h4 class="text-sm font-bold text-slate-900">${item.Nama_Peserta}</h4></div><div class="flex flex-wrap items-center gap-2 self-end sm:self-center">${btnCanvasRender}</div></div>`;
+        });
+      } wrapper.classList.remove('hidden');
+    }
+  </script>
+</body>
+
+</html>
