@@ -218,6 +218,10 @@
                 class="w-full h-7 rounded-md cursor-pointer border-0 p-0">
             </div>
           </div>
+          <button onclick="simpanKonfigurasiDesainCloud()"
+            class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition shadow-xs mt-2 text-sm flex justify-center items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan Pengaturan Desain ke Server
+          </button>
         </div>
 
         <div class="bg-white border border-slate-200 rounded-2xl shadow-xs p-5 space-y-4">
@@ -314,7 +318,7 @@
     // CONFIGURATION & DATABASE CONNECTION
     // ==========================================
     const IS_PREVIEW = false; // WAJIB false JIKA SUDAH LIVE
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxcYdWVnIJvHZz_slpL9IlY47dcG4JVHJ4sXPCeRjC02TxdSgfEBEx_Q1QCZL11kgca/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbx6T5AgsAWXsUSly39wguF-1TYhjUANeEb98t4bOe_OoIwp3sm22bbVp7TjU_O5TbmB/exec";
 
     let STATE_DATA = [];
     let FILTER_CARI_SEKARANG = 'No_HP';
@@ -623,8 +627,42 @@
       try {
         const respon = await fetch(`${GAS_URL}?action=ambil_semua`); const resJson = await respon.json();
         if (resJson.status === 'success') { STATE_DATA = resJson.data.reverse(); simpanKeLocalStorageBackup(); renderUIAplikasi(); if (!isSilent) tampilkanToast("Database berhasil diperbarui."); }
+
+        const resConfig = await fetch(`${GAS_URL}?action=ambil_pengaturan`); const configJson = await resConfig.json();
+        if (configJson.status === 'success' && configJson.data) {
+          const config = configJson.data;
+          document.getElementById('slider-x-nama').value = config.xPos || 320;
+          document.getElementById('slider-y-nama').value = config.yPos || 230;
+          document.getElementById('slider-size-nama').value = config.fontSize || 25;
+          document.getElementById('picker-color-nama').value = config.color || "#1e1b4b";
+
+          if (config.templateBase64 && config.templateBase64.length > 20) {
+            templateImage.src = config.templateBase64;
+            isCustomTemplateLoaded = true;
+          }
+          simpanKonfigurasiDesain(config.templateBase64 && config.templateBase64.length > 20 ? config.templateBase64 : null);
+          renderUIAplikasi();
+        }
       } catch (err) { if (!isSilent) tampilkanToast("Server Google tidak merespon.", "error"); }
       finally { document.getElementById('ready-badge').classList.add('hidden'); }
+    }
+
+    async function simpanKonfigurasiDesainCloud() {
+      tampilkanToast("Menyimpan ke Server Cloud (Google Drive)...", "info");
+      const config = {
+        xPos: document.getElementById('slider-x-nama').value,
+        yPos: document.getElementById('slider-y-nama').value,
+        fontSize: document.getElementById('slider-size-nama').value,
+        color: document.getElementById('picker-color-nama').value,
+        base64Image: isCustomTemplateLoaded && templateImage.src.startsWith('data:image') ? templateImage.src : null
+      };
+
+      try {
+        const respon = await fetch(GAS_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: "simpan_pengaturan", data: config }) });
+        const resJson = await respon.json();
+        if (resJson.status === 'success') { tampilkanToast("Pengaturan berhasil disimpan di Server Cloud!"); }
+        else { tampilkanToast("Gagal menyimpan ke Cloud: " + resJson.message, "error"); }
+      } catch (err) { tampilkanToast("Gagal menghubungi server.", "error"); }
     }
 
     function pilihKategoriCari(kategori) {
